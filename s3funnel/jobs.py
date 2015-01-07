@@ -7,6 +7,7 @@
 from workerpool import Job
 import boto
 import time
+import mimetypes
 try:
     import hashlib
 except ImportError:
@@ -111,6 +112,7 @@ class PutJob(Job):
             log.warning("Bad ACL `%s` for key, setting to `private`: %s" % (self.acl, self.key))
             acl = 'private'
         self.headers['x-amz-acl'] = acl
+        self.headers['Content-Type'] = self._get_mime(path)
 
     def _is_new(self, bucket, key):
         # Get existing key etag
@@ -129,6 +131,9 @@ class PutJob(Job):
         digest = hash.hexdigest()
 
         return etag != digest
+
+    def _get_mime(self, path):
+        return mimetypes.guess_type(path)[0] or "application/octet-stream"
 
     def _do(self, toolbox):
         for i in xrange(self.retries):
